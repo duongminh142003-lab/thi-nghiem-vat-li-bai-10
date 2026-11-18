@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thí nghiệm thả rơi – Lực cản không khí</title>
+<style>
+:root{--bg:#eaf6ff;--card:#fff;--text:#1d2b3a;--muted:#5b6b7c;--line:#d6e4f0;--a:#ff7a2f;--b:#16b5a5;--ok:#1fa85a;--bad:#e5484d;--pri:#6c5ce7;--okbg:#e3f8ec;--badbg:#fdeaea;--hint:#fff6d6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a26;--card:#1a2735;--text:#eaf1f8;--muted:#9db0c3;--line:#2c3e52;--okbg:#17382a;--badbg:#3d1f22;--hint:#3b3414}}
+:root[data-theme="dark"]{--bg:#101a26;--card:#1a2735;--text:#eaf1f8;--muted:#9db0c3;--line:#2c3e52;--okbg:#17382a;--badbg:#3d1f22;--hint:#3b3414}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Roboto,Arial,sans-serif;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding:12px}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+h1{font-size:1.3rem;margin:0}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:700}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px}
+.main{display:grid;grid-template-columns:1.35fr 1fr;gap:12px}
+@media(max-width:820px){.main{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;border-radius:14px;display:block;background:#bfe6ff}
+.clocks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.clk{border-radius:14px;padding:8px 10px;color:#fff}
+.clk.a{background:var(--a)}.clk.b{background:var(--b)}
+.clk b{font-size:1.5rem;display:block;font-variant-numeric:tabular-nums}
+.clk small{display:block;opacity:.95;font-variant-numeric:tabular-nums}
+label{display:flex;justify-content:space-between;font-weight:600;margin-top:8px}
+input[type=range]{width:100%;accent-color:var(--pri)}
+input:disabled{opacity:.45}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;background:var(--pri);color:#fff;transition:transform .1s}
+button:hover:not(:disabled){transform:translateY(-2px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.sec{background:var(--card);color:var(--text);border:2px solid var(--line)}
+button.go{background:var(--ok)}
+.q{margin-top:12px}
+.q h2{font-size:1.1rem;margin:0 0 8px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;background:var(--card);color:var(--text);border:2px solid var(--line)}
+.opt.right{background:var(--okbg);border-color:var(--ok)}
+.opt.wrong{background:var(--badbg);border-color:var(--bad)}
+.fb{margin-top:10px;padding:10px 12px;border-radius:12px;display:none}
+.fb.ok{display:block;background:var(--okbg);border:2px solid var(--ok)}
+.fb.no{display:block;background:var(--badbg);border:2px solid var(--bad)}
+.fb.info{display:block;background:var(--hint);border:2px solid #e0b800}
+.screen{text-align:center;padding:26px 14px}
+.screen h2{font-size:1.6rem;margin:6px 0}
+.big{font-size:3rem}
+.sum{text-align:left;max-width:640px;margin:12px auto}
+.sum li{margin:6px 0}
+.hide{display:none!important}
+.cf{position:fixed;top:-30px;font-size:26px;pointer-events:none;animation:fall 2.2s linear forwards;z-index:9}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🍎 Thí nghiệm thả rơi &amp; Lực cản không khí</h1>
+  <div class="badges"><span class="badge" id="bRound">Chọn chế độ</span><span class="badge">⭐ <span id="bScore">0</span> điểm</span></div>
+</header>
+
+<div id="intro" class="card screen">
+  <div class="big">🪂🔨🪶</div>
+  <h2>Vật nặng có rơi nhanh hơn vật nhẹ không?</h2>
+  <p>Bạn sẽ thả hai vật có khối lượng khác nhau, điều chỉnh lực cản không khí và theo dõi đồng hồ, độ cao của từng vật. Hãy dự đoán trước, rồi để thí nghiệm trả lời!</p>
+  <div class="btns" style="justify-content:center">
+    <button class="go" onclick="startQuest()">🎮 Chơi thử thách (5 vòng)</button>
+    <button onclick="startFree()">🧪 Thí nghiệm tự do</button>
+  </div>
+</div>
+
+<div id="game" class="hide">
+<div class="main">
+  <div class="card"><canvas id="cv" width="640" height="460"></canvas></div>
+  <div class="card">
+    <div class="clocks">
+      <div class="clk a"><small>Vật A (cam)</small><b id="tA">0.00 s</b><small>Độ cao: <span id="hA">20.0</span> m</small><small>Tốc độ: <span id="vA">0.0</span> m/s</small></div>
+      <div class="clk b"><small>Vật B (xanh)</small><b id="tB">0.00 s</b><small>Độ cao: <span id="hB">20.0</span> m</small><small>Tốc độ: <span id="vB">0.0</span> m/s</small></div>
+    </div>
+    <label>Khối lượng vật A <span id="lmA">5 kg</span></label><input type="range" id="mA" min="0.1" max="5" step="0.1" value="5">
+    <label>Khối lượng vật B <span id="lmB">0.5 kg</span></label><input type="range" id="mB" min="0.1" max="5" step="0.1" value="0.5">
+    <label>💨 Lực cản không khí <span id="ldrag">0 %</span></label><input type="range" id="drag" min="0" max="100" step="1" value="0">
+    <label>Độ cao thả <span id="lH">20 m</span></label><input type="range" id="H" min="5" max="40" step="1" value="20">
+    <div class="btns">
+      <button class="go" id="bDrop" onclick="drop()">⬇️ Thả rơi!</button>
+      <button class="sec" id="bReset" onclick="resetScene()">↺ Đặt lại vật</button>
+      <label style="margin:0;align-items:center;gap:6px;font-weight:600"><input type="checkbox" id="slow" style="width:auto"> Quay chậm</label>
+    </div>
+  </div>
+</div>
+<div class="card q">
+  <h2 id="qTitle"></h2>
+  <div class="opts" id="opts"></div>
+  <div class="fb" id="fb"></div>
+  <div class="btns">
+    <button id="bNext" class="hide" onclick="nextRound()">Tiếp tục ➜</button>
+    <button class="sec" onclick="restart()">🔄 Bắt đầu lại</button>
+  </div>
+</div>
+</div>
+
+<div id="end" class="card screen hide">
+  <div class="big" id="endIcon">🏆</div>
+  <h2 id="endTitle"></h2>
+  <p id="endScore" style="font-size:1.2rem;font-weight:700"></p>
+  <div class="sum card">
+    <b>📚 Tóm tắt kiến thức</b>
+    <ul>
+      <li><b>Trong chân không</b> (không có lực cản), mọi vật đều rơi với cùng gia tốc g ≈ 9,8 m/s² nên <b>chạm đất cùng lúc</b>, dù nặng hay nhẹ.</li>
+      <li><b>Trong không khí</b>, vật chịu thêm lực cản hướng lên. Gia tốc: a = g − F<sub>c</sub>/m.</li>
+      <li>Cùng lực cản, vật <b>nhẹ hơn</b> có F<sub>c</sub>/m lớn hơn → gia tốc nhỏ hơn → rơi <b>chậm hơn</b>.</li>
+      <li>Lực cản tăng theo tốc độ; khi F<sub>c</sub> = trọng lượng, vật rơi đều với <b>tốc độ giới hạn</b>.</li>
+      <li>Hai vật cùng khối lượng, cùng hình dạng thì rơi cùng lúc ở mọi điều kiện.</li>
+    </ul>
+  </div>
+  <div class="btns" style="justify-content:center">
+    <button class="go" onclick="startQuest()">🔄 Chơi lại thử thách</button>
+    <button class="sec" onclick="startFree()">🧪 Thí nghiệm tự do</button>
+  </div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),G=9.8,GY=420,SPAN=370,R=18;
+const ROUNDS=[
+ {t:'predict',set:{mA:5,mB:0.5,drag:0,H:20},q:'Vòng 1 – Chân không (lực cản = 0). Vật A nặng 5 kg, vật B nhẹ 0,5 kg cùng thả từ độ cao 20 m. Vật nào chạm đất trước?',ans:2,
+  hint:'Khi không có lực cản, chỉ còn trọng lực tác dụng. Hãy xem gia tốc của mỗi vật.',
+  ex:'Không có lực cản thì a = g cho mọi vật, không phụ thuộc khối lượng → chạm đất cùng lúc.'},
+ {t:'predict',set:{mA:5,mB:0.5,drag:60,H:20},q:'Vòng 2 – Bây giờ có lực cản không khí 60 %. Vẫn A (5 kg) và B (0,5 kg). Vật nào chạm đất trước?',ans:0,
+  hint:'Lực cản gần như nhau, nhưng ảnh hưởng của nó lên vật nhẹ có lớn hơn không? Hãy nhớ a = g − Fc/m.',
+  ex:'Chia cho khối lượng nhỏ thì Fc/m lớn → vật nhẹ B bị “hãm” nhiều hơn, rơi chậm hơn. Vật nặng A chạm đất trước.'},
+ {t:'predict',set:{mA:2,mB:2,drag:80,H:20},q:'Vòng 3 – Lực cản rất lớn (80 %), nhưng A và B đều nặng 2 kg, cùng hình dạng. Kết quả thế nào?',ans:2,
+  hint:'So sánh Fc/m của hai vật: chúng có khác nhau không?',
+  ex:'Cùng khối lượng và cùng lực cản nên cùng gia tốc ở mọi thời điểm → chạm đất cùng lúc.'},
+ {t:'tune',set:{mA:4,mB:1,drag:70,H:20},q:'Vòng 4 – Thử thách kéo thanh! A nặng 4 kg, B nhẹ 1 kg. Hãy kéo thanh lực cản đến mức để hai vật chạm đất cùng lúc (chênh lệch dưới 0,05 s), rồi bấm Thả rơi.',
+  hint:'Muốn vật nhẹ không bị hãm hơn vật nặng, ta phải giảm lực cản về gần 0.',
+  ex:'Khi lực cản gần bằng 0 (chân không), hai vật rơi như nhau.'},
+ {t:'predict',set:{mA:5,mB:0.2,drag:100,H:30},q:'Vòng 5 – Lực cản tối đa (100 %), độ cao 30 m. A nặng 5 kg, B chỉ 0,2 kg. Vật nào chạm đất trước?',ans:0,
+  hint:'Vật rất nhẹ sẽ nhanh chóng đạt tốc độ giới hạn thấp. Vật nào đạt tốc độ giới hạn lớn hơn?',
+  ex:'Tốc độ giới hạn v = √(mg/k) tăng theo khối lượng: vật nặng đạt tốc độ lớn hơn nhiều nên chạm đất trước.'}
+];
+const OPTS=['Vật A (nặng) chạm đất trước','Vật B (nhẹ) chạm đất trước','Hai vật chạm đất cùng lúc'];
+let S={mode:'',r:0,score:0,answered:false,firstTry:true,tries:0};
+let objs=[],T=0,running=false,last=0,cf=0;
+
+function P(){return{mA:+$('mA').value,mB:+$('mB').value,k:+$('drag').value/100*0.5,H:+$('H').value,d:+$('drag').value}}
+function labels(){const p=P();$('lmA').textContent=p.mA.toFixed(1)+' kg';$('lmB').textContent=p.mB.toFixed(1)+' kg';$('ldrag').textContent=p.d+' %';$('lH').textContent=p.H+' m'}
+['mA','mB','drag','H'].forEach(i=>$(i).addEventListener('input',()=>{labels();resetScene()}));
+
+function resetScene(){const p=P();objs=[{m:p.mA,h:p.H,v:0,t:0,done:false,fx:0},{m:p.mB,h:p.H,v:0,t:0,done:false,fx:0}];T=0;running=false;lock(false);updateUI();}
+function lock(run){const q=S.mode==='quest',tune=q&&ROUNDS[S.r]&&ROUNDS[S.r].t==='tune';
+ ['mA','mB','H'].forEach(i=>$(i).disabled=run||q);$('drag').disabled=run||(q&&!tune);$('bDrop').disabled=run;$('bReset').disabled=run;}
+
+function startQuest(){S={mode:'quest',r:0,score:0,answered:false,firstTry:true,tries:0,res:[]};show('game');loadRound();}
+function startFree(){S={mode:'free',r:0,score:S.score||0,answered:true};show('game');
+ $('bRound').textContent='Thí nghiệm tự do';$('qTitle').textContent='🧪 Tự do khám phá';$('opts').innerHTML='';
+ $('bNext').classList.add('hide');fb('info','Hãy thử: (1) kéo lực cản về 0, (2) tăng lực cản và so sánh vật nhẹ – vật nặng, (3) cho hai vật cùng khối lượng. Quan sát đồng hồ và độ cao nhé!');
+ lock(false);resetScene();}
+function restart(){S.mode==='free'?startFree():startQuest();}
+function show(id){['intro','game','end'].forEach(x=>$(x).classList.toggle('hide',x!==id));}
+
+function loadRound(){const r=ROUNDS[S.r];S.answered=r.t==='tune';S.firstTry=true;S.tries=0;
+ for(const k of ['mA','mB','drag','H'])$(k).value=r.set[k];labels();
+ $('bRound').textContent='Vòng '+(S.r+1)+' / '+ROUNDS.length;$('bScore').textContent=S.score;
+ $('qTitle').textContent=r.q;$('opts').innerHTML='';$('bNext').classList.add('hide');fb('');
+ if(r.t==='predict')OPTS.forEach((o,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=o;b.onclick=()=>pick(i);b.id='o'+i;$('opts').appendChild(b)});
+ resetScene();}
+function fb(type,html){const e=$('fb');e.className='fb'+(type?' '+type:'');e.innerHTML=html||'';}
+
+function pick(i){if(S.answered)return;S.answered=true;const r=ROUNDS[S.r];
+ const ok=i===r.ans;S.ok=ok;$('o'+i).classList.add(ok?'right':'wrong');if(!ok)$('o'+r.ans).classList.add('right');
+ if(ok){S.score+=10;$('bScore').textContent=S.score;confetti();fb('ok','🎉 <b>Chính xác! +10 điểm.</b> Bấm “Thả rơi” để kiểm chứng bằng thí nghiệm.');}
+ else fb('no','🤔 <b>Chưa đúng rồi.</b> Gợi ý: '+r.hint+' Hãy bấm “Thả rơi” để xem kết quả thật!');
+ S.res.push(ok);}
+
+function drop(){if(S.mode==='quest'&&!S.answered){fb('info','👆 Hãy chọn dự đoán của bạn trước khi thả nhé!');return;}
+ resetScene();running=true;last=performance.now();lock(true);}
+
+function finish(){running=false;lock(false);const a=objs[0].t,b=objs[1].t,d=Math.abs(a-b);
+ const res=`⏱ A: <b>${a.toFixed(2)} s</b> · B: <b>${b.toFixed(2)} s</b> (chênh ${d.toFixed(2)} s)`;
+ if(S.mode==='free'){fb('info',res+'. '+(d<0.05?'Hai vật chạm đất cùng lúc!':(a<b?'Vật A chạm đất trước.':'Vật B chạm đất trước.')));return;}
+ const r=ROUNDS[S.r];
+ if(r.t==='tune'){S.tries++;
+  if(d<0.05){const pts=S.tries===1?10:5;S.score+=pts;S.res.push(true);$('bScore').textContent=S.score;confetti();
+   fb('ok','🎉 <b>Tuyệt vời! +'+pts+' điểm.</b> '+res+'<br>'+r.ex);$('bNext').classList.remove('hide');$('bNext').textContent=S.r===ROUNDS.length-1?'Xem kết quả ➜':'Tiếp tục ➜';}
+  else{fb('no','😕 Chưa cùng lúc. '+res+'<br>Gợi ý: '+r.hint+' Hãy kéo thanh lực cản rồi thả lại.');if(S.tries>=3){S.res.push(false);$('bNext').classList.remove('hide');}}
+  return;}
+ fb(S.ok?'ok':'no',(S.ok?'✅ Đúng với thí nghiệm! ':'📖 Kết quả thật: ')+res+'<br><b>Giải thích:</b> '+r.ex);
+ $('bNext').classList.remove('hide');$('bNext').textContent=S.r===ROUNDS.length-1?'Xem kết quả ➜':'Tiếp tục ➜';}
+
+function nextRound(){S.r++;if(S.r>=ROUNDS.length)return endGame();loadRound();}
+function endGame(){show('end');const n=S.res.filter(Boolean).length,tot=ROUNDS.length;
+ $('endIcon').textContent=n>=5?'🏆':n>=3?'🥈':'🌱';
+ $('endTitle').textContent=n>=5?'Nhà khoa học xuất sắc!':n>=3?'Làm tốt lắm!':'Cố gắng thêm nhé!';
+ $('endScore').textContent='Bạn đúng '+n+'/'+tot+' vòng – tổng '+S.score+' điểm';if(n>=4)confetti();}
+
+function confetti(){const e=['🎉','⭐','✨','🎈','🍎'];for(let i=0;i<26;i++){const s=document.createElement('span');s.className='cf';s.textContent=e[i%5];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*.6+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),3000);}}
+
+function stepSim(dt){const p=P();const n=Math.ceil(dt/0.004),h=dt/n;
+ for(let i=0;i<n;i++){T+=h;objs.forEach(o=>{if(o.done)return;const a=G-(p.k/o.m)*o.v*o.v;o.v+=a*h;const ho=o.h;o.h-=o.v*h;o.t+=h;
+  if(o.h<=0){const f=ho/(ho-o.h);o.t-=h*(1-f);o.h=0;o.done=true;o.fx=1;}});}
+ if(objs.every(o=>o.done))finish();}
+
+function updateUI(){[['A',0],['B',1]].forEach(([n,i])=>{const o=objs[i];$('t'+n).textContent=o.t.toFixed(2)+' s';$('h'+n).textContent=o.h.toFixed(1);$('v'+n).textContent=o.v.toFixed(1);});}
+
+function draw(){const p=P(),W=640,Hc=460;
+ const g=ctx.createLinearGradient(0,0,0,GY);g.addColorStop(0,'#5ec2ff');g.addColorStop(1,'#d9f2ff');ctx.fillStyle=g;ctx.fillRect(0,0,W,Hc);
+ ctx.fillStyle='#ffd84d';ctx.beginPath();ctx.arc(570,60,28,0,7);ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,.85)';[[160,60],[400,100],[300,40]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,16,0,7);ctx.arc(x+18,y+4,20,0,7);ctx.arc(x+38,y,14,0,7);ctx.fill()});
+ ctx.fillStyle='#5cc46a';ctx.fillRect(0,GY,W,Hc-GY);ctx.fillStyle='#3da34f';ctx.fillRect(0,GY,W,6);
+ // ruler
+ const step=p.H<=10?1:p.H<=20?2:5;ctx.fillStyle='#1d2b3a';ctx.font='12px sans-serif';ctx.strokeStyle='#1d2b3a';ctx.lineWidth=1;
+ ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillRect(34,GY-SPAN-6,50,SPAN+6);ctx.fillStyle='#1d2b3a';
+ for(let m=0;m<=p.H;m+=step){const y=GY-m/p.H*SPAN;ctx.beginPath();ctx.moveTo(60,y);ctx.lineTo(80,y);ctx.stroke();ctx.fillText(m+' m',36,y+4);}
+ ctx.beginPath();ctx.moveTo(80,GY);ctx.lineTo(80,GY-SPAN);ctx.stroke();
+ const xs=[220,430],cols=[['#ffb27a','#e8590c'],['#7ee8da','#0b8f82']],names=['A','B'];
+ objs.forEach((o,i)=>{const x=xs[i],y=GY-o.h/p.H*SPAN-R;
+  ctx.strokeStyle='rgba(0,0,0,.15)';ctx.setLineDash([4,5]);ctx.beginPath();ctx.moveTo(x,GY-SPAN-R*2);ctx.lineTo(x,GY);ctx.stroke();ctx.setLineDash([]);
+  if(!o.done&&o.v>1&&p.d>0){const len=Math.min(60,o.v*p.d/100*4);ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2.5;
+   [-14,-5,5,14].forEach((dx,k)=>{ctx.beginPath();ctx.moveTo(x+dx,y-R-6-k%2*8);ctx.lineTo(x+dx,y-R-6-k%2*8-len);ctx.stroke();});}
+  const gr=ctx.createRadialGradient(x-6,y-6,3,x,y,R+4);gr.addColorStop(0,cols[i][0]);gr.addColorStop(1,cols[i][1]);
+  ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,R+Math.min(8,o.m*1.6),0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 15px sans-serif';ctx.textAlign='center';ctx.fillText(names[i],x,y+5);
+  ctx.fillStyle='#1d2b3a';ctx.font='12px sans-serif';ctx.fillText(o.m.toFixed(1)+' kg',x,GY+28);
+  if(o.fx>0){ctx.strokeStyle='rgba(255,255,255,'+o.fx+')';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,GY,(1-o.fx)*50+8,Math.PI,0);ctx.stroke();o.fx-=0.03;}
+  ctx.textAlign='left';});}
+
+function loop(now){if(running){const dt=Math.min(0.05,(now-last)/1000)*($('slow').checked?0.4:1);last=now;stepSim(dt);}updateUI();draw();requestAnimationFrame(loop);}
+labels();resetScene();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
